@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import config from './config.js';
 
 const {
@@ -9,10 +10,17 @@ const {
 	outFilename
 } = config;
 
+const csvHeaders = ['datetime', 'timestamp', 'elapsed', 'outcome', 'message'];
+
 const outPath = path.join('.', outFilename);
 
 // This utility only appends to the file, never replaces it
 console.log(`Writing to ${outPath}`);
+
+if(!existsSync(outPath)) {
+	// Add headers if the file doesn't exist yet
+	await addToOutputFile(outPath, csvHeaders.join(','));
+}
 
 let successCount = 0;
 let failureCount = 0;
@@ -33,15 +41,17 @@ while(true) {
 		t1 = Date.now();
 		let elapsed = t1 - t0;
 		let outcome;
+		let outcomeDetails = '';
 		let message;
 
 		let dateNow = new Date();
+		let timestamp = dateNow.getTime();
 		
 		if(res) {
 			// it is success as long as we get any sort of response from the external server, i.e. fetch doesn't fail due to network issues
 			// we don't care about the response codes though - we might be getting 404 but we don't care as long as we get something
 			successCount++;
-			message = `Server responded ☺  (x ${successCount})`;
+			message = `Server responded after ${elapsed} ms ☺  (x ${successCount})`;
 
 			outcome = 'success';
 			console.log(message);
@@ -56,12 +66,12 @@ while(true) {
 			}
 
 			message = `Failure (x ${failureCount}): ${reason}`;
-
-			outcome = 'error: ' + reason;
+			outcome = 'error';
+			outcomeDetails = reason;
 			console.error(message);
 		}
 
-		let outStr = [dateNow.toString(), elapsed, outcome].join(',');
+		let outStr = [dateNow.toString(), timestamp,  elapsed, outcome, outcomeDetails].join(',');
 
 		await addToOutputFile(outPath, outStr);
 	}
