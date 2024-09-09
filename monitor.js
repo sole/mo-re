@@ -27,35 +27,43 @@ while(true) {
 	try {
 		t0 = Date.now();
 		res = await attemptFetch(urlToFetch, timeoutLength);
-		successCount++;
-		console.log(`Server responded ☺  (x ${successCount})`);
 	} catch(e) {
-		failureCount++;
-		console.error(`Failure (x ${failureCount}):`, e.message, e);
 		error = e;
 	} finally {
 		t1 = Date.now();
 		let elapsed = t1 - t0;
 		let outcome;
+		let message;
 
 		let dateNow = new Date();
 		
 		if(res) {
-			// it is success as long as we get any sort of response from the external server
-			outcome = 'success';
-		} else if(error) {
-			outcome = 'error: ' + error.message;
+			// it is success as long as we get any sort of response from the external server, i.e. fetch doesn't fail due to network issues
+			// we don't care about the response codes though - we might be getting 404 but we don't care as long as we get something
+			successCount++;
+			message = `Server responded ☺  (x ${successCount})`;
 
+			outcome = 'success';
+			console.log(message);
+		} else if(error) {
+			failureCount++;
+
+			let reason = error.message;
 			let cause = error['cause'];
+			
 			if(cause) {
-				outcome += ` (${cause.message})`;
+				reason += ` (${cause.message})`;
 			}
+
+			message = `Failure (x ${failureCount}): ${reason}`;
+
+			outcome = 'error: ' + reason;
+			console.error(message);
 		}
 
 		let outStr = [dateNow.toString(), elapsed, outcome].join(',');
 
 		await addToOutputFile(outPath, outStr);
-
 	}
 
 	await waitTime(checkInterval);
