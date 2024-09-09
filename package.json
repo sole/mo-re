@@ -1,0 +1,12 @@
+{
+  "name": "mo-re",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Prove your ISP wrong!!!",
+  "main": "monitor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "sole",
+  "license": "ISC"
+}
